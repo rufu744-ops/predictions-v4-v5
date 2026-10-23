@@ -1,0 +1,233 @@
+name: Forecasting V4 A+B
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: demo=synthetic check / live=real V3 feature input
+        type: choice
+        options: [demo, live]
+        default: demo
+      model:
+        description: Models to run
+        type: choice
+        options: [both, a, b]
+        default: both
+      market:
+        description: Market
+        type: choice
+        options: [JP, US, BOTH]
+        default: US
+      profile:
+        description: Computation profile
+        type: choice
+        options: [standard, light]
+        default: standard
+  schedule:
+    - cron: '0 9 * * 1-5'
+    - cron: '0 0 * * 2-6'
+permissions:
+  contents: write
+concurrency:
+  group: forecasting-write-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      operation: ${{ steps.plan.outputs.operation }}
+      market: ${{ steps.plan.outputs.market }}
+      profile: ${{ steps.plan.outputs.profile }}
+      feature_sha: ${{ steps.feature_revision.outputs.sha }}
+    steps:
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          REQUESTED_MODEL: ${{ inputs.model }}
+          REQUESTED_OPERATION: ${{ inputs.operation }}
+          REQUESTED_MARKET: ${{ inputs.market }}
+          REQUESTED_PROFILE: ${{ inputs.profile }}
+          ENABLE_LIVE: ${{ vars.ENABLE_LIVE }}
+        run: |
+          python - <<'PY'
+          import os,json
+          manual=os.environ['EVENT']=='workflow_dispatch'
+          market=os.environ['REQUESTED_MARKET'] if manual else ('JP' if os.environ['SCHEDULE']=='0 9 * * 1-5' else 'US')
+          choice=os.environ['REQUESTED_MODEL'] if manual else 'both'
+          models=['a','b'] if choice=='both' else [choice]
+          operation=os.environ['REQUESTED_OPERATION'] if manual else ('live' if os.environ['ENABLE_LIVE']=='true' else 'disabled')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:
+              markets=['JP','US'] if market=='BOTH' else [market]
+              f.write('matrix='+json.dumps({'model':models,'market':markets})+'\n')
+              f.write('market='+market+'\n')
+              f.write('operation='+operation+'\n')
+              f.write('profile='+(os.environ['REQUESTED_PROFILE'] if manual else 'standard')+'\n')
+          PY
+      - name: Check shared feature configuration
+        if: steps.plan.outputs.operation == 'live'
+        env:
+          FEATURE_REPO: ${{ vars.FEATURE_REPOSITORY }}
+        run: |
+          if [[ -z "$FEATURE_REPO" ]]; then
+            echo 'Connect FEATURE_REPOSITORY and FEATURES_READ_TOKEN first; demo does not need these.'
+            exit 1
+          fi
+      - name: Pin one feature revision for both models
+        if: steps.plan.outputs.operation == 'live'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.FEATURE_REPOSITORY }}
+          ref: ${{ vars.FEATURE_BRANCH || 'main' }}
+          token: ${{ secrets.FEATURES_READ_TOKEN }}
+          path: _feature_pin
+          persist-credentials: false
+      - id: feature_revision
+        if: steps.plan.outputs.operation == 'live'
+        run: |
+          python - <<'PYTHON'
+          import os,subprocess
+          sha=subprocess.check_output(['git','-C','_feature_pin','rev-parse','HEAD'],text=True).strip()
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write('sha='+sha+'\n')
+          PYTHON
+  compute:
+    needs: plan
+    if: needs.plan.outputs.operation != 'disabled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      MODEL: ${{ matrix.model }}
+      MARKET: ${{ matrix.market }}
+      OPERATION: ${{ needs.plan.outputs.operation }}
+      PROFILE: ${{ needs.plan.outputs.profile }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Regression checks
+        run: python tools/run_checks.py --model "$MODEL"
+      - name: Synthetic demonstration
+        if: needs.plan.outputs.operation == 'demo'
+        run: python run.py --model "$MODEL" --market "$MARKET" --demo --demo-tickers 1
+      - name: Check feature configuration
+        if: needs.plan.outputs.operation == 'live'
+        env:
+          FEATURE_REPO: ${{ vars.FEATURE_REPOSITORY }}
+        run: |
+          if [[ -z "$FEATURE_REPO" ]]; then
+            echo 'Set FEATURE_REPOSITORY and FEATURES_READ_TOKEN after connecting the V3 feature export.'
+            exit 1
+          fi
+      - name: Read one shared private V3 feature feed
+        if: needs.plan.outputs.operation == 'live'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.FEATURE_REPOSITORY }}
+          ref: ${{ needs.plan.outputs.feature_sha }}
+          token: ${{ secrets.FEATURES_READ_TOKEN }}
+          path: _feature_feed
+          persist-credentials: false
+      - name: Restore private filter/posterior state
+        if: needs.plan.outputs.operation == 'live'
+        uses: actions/cache/restore@v4
+        with:
+          path: state/v4${{ matrix.model }}/${{ matrix.market }}
+          key: forecasting-state-v4${{ matrix.model }}-${{ matrix.market }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: forecasting-state-v4${{ matrix.model }}-${{ matrix.market }}-${{ github.ref_name }}-
+      - name: Forecast and evaluate
+        id: forecast
+        if: needs.plan.outputs.operation == 'live'
+        env:
+          FEATURE_SUBDIR: ${{ vars.FEATURE_SUBDIR || 'v4_inputs' }}
+        run: |
+          set -euo pipefail
+          flags=()
+          if [[ "$PROFILE" == light ]]; then flags=(--light); fi
+          python tools/check_live_input.py --market "$MARKET" --input "_feature_feed/$FEATURE_SUBDIR/$MARKET"
+          python run.py --model "$MODEL" --market "$MARKET" --input "_feature_feed/$FEATURE_SUBDIR/$MARKET" --train-sessions 2520 "${flags[@]}"
+      - name: Retain private state
+        if: needs.plan.outputs.operation == 'live' && steps.forecast.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: state/v4${{ matrix.model }}/${{ matrix.market }}
+          key: forecasting-state-v4${{ matrix.model }}-${{ matrix.market }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Stage complete logs, including completed work if another step failed
+        if: always() && needs.plan.outputs.operation == 'live'
+        run: python tools/stage_logs.py --model "$MODEL" --market "$MARKET" --destination _run_result
+      - uses: actions/upload-artifact@v4
+        if: always() && needs.plan.outputs.operation == 'live'
+        with:
+          name: native-v4${{ matrix.model }}-${{ matrix.market }}-${{ github.run_id }}
+          path: _run_result/
+          if-no-files-found: warn
+  save_and_export:
+    needs: [plan, compute]
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.operation == 'live'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-v4*-${{ github.run_id }}
+          path: _collected
+      - name: Merge A/B outputs once
+        run: python tools/merge_runs.py --source _collected --destination .
+      - name: Save native history in forecasting
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for dir in predictions evaluations output/status; do
+            if [[ -d "$dir" ]]; then git add "$dir"; fi
+          done
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "forecasting: save A/B logs $GITHUB_RUN_ID"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+      - name: Combined results-only export
+        run: python -c "from common.exchange import export_results; print(export_results('.', 'exchange'))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results-only-${{ github.run_id }}
+          path: exchange/
+      - name: Open one private results repository
+        if: vars.RESULTS_REPOSITORY != ''
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.RESULTS_REPOSITORY }}
+          ref: ${{ vars.RESULTS_BRANCH || 'main' }}
+          token: ${{ secrets.RESULTS_WRITE_TOKEN }}
+          path: _results
+          fetch-depth: 0
+      - name: Publish only combined A/B results
+        if: vars.RESULTS_REPOSITORY != ''
+        env:
+          RESULTS_BRANCH: ${{ vars.RESULTS_BRANCH || 'main' }}
+        run: |
+          set -euo pipefail
+          python -c "from common.exchange import export_results; print(export_results('.', '_results'))"
+          cd _results
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.json
+          for dir in predictions evaluations; do
+            if [[ -d "$dir" ]]; then git add "$dir"; fi
+          done
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "results: export A/B forecasts $GITHUB_RUN_ID"
+          git pull --rebase origin "$RESULTS_BRANCH"
+          git push origin "HEAD:$RESULTS_BRANCH"
