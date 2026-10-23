@@ -1,0 +1,95 @@
+{
+  "market": "US",
+  "origin": "2026-10-22",
+  "coverage": 0.9582504970178927,
+  "expected_tickers": 503,
+  "failures": [
+    {
+      "ticker": "APO",
+      "reason": "Insufficient non-overlapping matured outcomes: 55 < 64 (h=20)"
+    },
+    {
+      "ticker": "BG",
+      "reason": "Insufficient non-overlapping matured outcomes: 32 < 64 (h=20)"
+    },
+    {
+      "ticker": "BLK",
+      "reason": "Insufficient non-overlapping matured outcomes: 24 < 64 (h=20)"
+    },
+    {
+      "ticker": "CEG",
+      "reason": "Insufficient non-overlapping matured outcomes: 55 < 64 (h=20)"
+    },
+    {
+      "ticker": "FDXF",
+      "reason": "Insufficient non-overlapping matured outcomes: 43 < 64 (h=1)"
+    },
+    {
+      "ticker": "FERG",
+      "reason": "Insufficient non-overlapping matured outcomes: 25 < 64 (h=20)"
+    },
+    {
+      "ticker": "GEHC",
+      "reason": "Insufficient non-overlapping matured outcomes: 43 < 64 (h=20)"
+    },
+    {
+      "ticker": "GEV",
+      "reason": "Insufficient non-overlapping matured outcomes: 28 < 64 (h=20)"
+    },
+    {
+      "ticker": "HONA",
+      "reason": "Insufficient non-overlapping matured outcomes: 30 < 64 (h=1)"
+    },
+    {
+      "ticker": "HOOD",
+      "reason": "Insufficient non-overlapping matured outcomes: 62 < 64 (h=20)"
+    },
+    {
+      "ticker": "KVUE",
+      "reason": "Insufficient non-overlapping matured outcomes: 40 < 64 (h=20)"
+    },
+    {
+      "ticker": "Q",
+      "reason": "Insufficient non-overlapping matured outcomes: 37 < 64 (h=5)"
+    },
+    {
+      "ticker": "RDDT",
+      "reason": "Insufficient non-overlapping matured outcomes: 29 < 64 (h=20)"
+    },
+    {
+      "ticker": "SKYD",
+      "reason": "Insufficient non-overlapping matured outcomes: 46 < 64 (h=5)"
+    },
+    {
+      "ticker": "SNDK",
+      "reason": "Insufficient non-overlapping matured outcomes: 17 < 64 (h=20)"
+    },
+    {
+      "ticker": "SOLV",
+      "reason": "Insufficient non-overlapping matured outcomes: 28 < 64 (h=20)"
+    },
+    {
+      "ticker": "SW",
+      "reason": "Insufficient non-overlapping matured outcomes: 27 < 64 (h=20)"
+    },
+    {
+      "ticker": "TKO",
+      "reason": "Insufficient non-overlapping matured outcomes: 36 < 64 (h=20)"
+    },
+    {
+      "ticker": "VLTO",
+      "reason": "Insufficient non-overlapping matured outcomes: 34 < 64 (h=20)"
+    },
+    {
+      "ticker": "VYLR",
+      "reason": "No current quote/features"
+    },
+    {
+      "ticker": "XOM",
+      "reason": "Insufficient non-overlapping matured outcomes: 55 < 64 (h=1)"
+    }
+  ],
+  "input_sha256": "c704802593c654f6ea3d54e2c4ec0d698a6427ec8b2ab3cd519a720a110cf931",
+  "settings_id": "0180c58f12bcfb86b603b564a6ddf67b19dfb4e3190439e75dcd87b66cf5f432",
+  "synthetic": false
+}

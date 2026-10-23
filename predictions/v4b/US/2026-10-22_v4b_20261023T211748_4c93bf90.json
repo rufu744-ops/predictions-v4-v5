@@ -1,0 +1,187 @@
+{
+  "market": "US",
+  "origin": "2026-10-22",
+  "coverage": 0.9582504970178927,
+  "expected_tickers": 503,
+  "failures": [
+    {
+      "ticker": "APO",
+      "reason": "Insufficient non-overlapping matured outcomes: 55 < 64 (h=20)"
+    },
+    {
+      "ticker": "BG",
+      "reason": "Insufficient non-overlapping matured outcomes: 32 < 64 (h=20)"
+    },
+    {
+      "ticker": "BLK",
+      "reason": "Insufficient non-overlapping matured outcomes: 24 < 64 (h=20)"
+    },
+    {
+      "ticker": "CEG",
+      "reason": "Insufficient non-overlapping matured outcomes: 55 < 64 (h=20)"
+    },
+    {
+      "ticker": "FDXF",
+      "reason": "Insufficient non-overlapping matured outcomes: 43 < 64 (h=1)"
+    },
+    {
+      "ticker": "FERG",
+      "reason": "Insufficient non-overlapping matured outcomes: 25 < 64 (h=20)"
+    },
+    {
+      "ticker": "GEHC",
+      "reason": "Insufficient non-overlapping matured outcomes: 43 < 64 (h=20)"
+    },
+    {
+      "ticker": "GEV",
+      "reason": "Insufficient non-overlapping matured outcomes: 28 < 64 (h=20)"
+    },
+    {
+      "ticker": "HONA",
+      "reason": "Insufficient non-overlapping matured outcomes: 30 < 64 (h=1)"
+    },
+    {
+      "ticker": "HOOD",
+      "reason": "Insufficient non-overlapping matured outcomes: 62 < 64 (h=20)"
+    },
+    {
+      "ticker": "KVUE",
+      "reason": "Insufficient non-overlapping matured outcomes: 40 < 64 (h=20)"
+    },
+    {
+      "ticker": "Q",
+      "reason": "Insufficient non-overlapping matured outcomes: 37 < 64 (h=5)"
+    },
+    {
+      "ticker": "RDDT",
+      "reason": "Insufficient non-overlapping matured outcomes: 29 < 64 (h=20)"
+    },
+    {
+      "ticker": "SKYD",
+      "reason": "Insufficient non-overlapping matured outcomes: 46 < 64 (h=5)"
+    },
+    {
+      "ticker": "SNDK",
+      "reason": "Insufficient non-overlapping matured outcomes: 17 < 64 (h=20)"
+    },
+    {
+      "ticker": "SOLV",
+      "reason": "Insufficient non-overlapping matured outcomes: 28 < 64 (h=20)"
+    },
+    {
+      "ticker": "SW",
+      "reason": "Insufficient non-overlapping matured outcomes: 27 < 64 (h=20)"
+    },
+    {
+      "ticker": "TKO",
+      "reason": "Insufficient non-overlapping matured outcomes: 36 < 64 (h=20)"
+    },
+    {
+      "ticker": "VLTO",
+      "reason": "Insufficient non-overlapping matured outcomes: 34 < 64 (h=20)"
+    },
+    {
+      "ticker": "VYLR",
+      "reason": "No current quote/features"
+    },
+    {
+      "ticker": "XOM",
+      "reason": "Insufficient non-overlapping matured outcomes: 55 < 64 (h=1)"
+    }
+  ],
+  "input_sha256": "c704802593c654f6ea3d54e2c4ec0d698a6427ec8b2ab3cd519a720a110cf931",
+  "settings_id": "726c1d110907e7440c1d35fd80bb964a539a1d4f7c321e8162110dace3bbc755",
+  "synthetic": false,
+  "settings": {
+    "horizons": [
+      1,
+      5,
+      20
+    ],
+    "train_sessions": 2520,
+    "min_observations": 30,
+    "min_coverage": 0.95,
+    "grid_points": 65,
+    "max_grid_points": 257,
+    "quadrature_tolerance": 0.002,
+    "prior_width_sd": 6.0,
+    "log_ratio_mean": -9.210340371976184,
+    "log_ratio_sd": 2.0,
+    "variance_shape": 2.5,
+    "variance_scale": 0.00015,
+    "prior_scale": 10.0,
+    "information_set": "V3_FEATURES"
+  },
+  "settings_sha256": "726c1d110907e7440c1d35fd80bb964a539a1d4f7c321e8162110dace3bbc755",
+  "feature_columns": [
+    "f_ret1",
+    "f_ret5",
+    "f_ret20",
+    "f_ret60",
+    "f_vol20",
+    "f_vol60",
+    "f_vol_z20",
+    "f_hl20",
+    "f_ma20_gap",
+    "f_ma60_gap",
+    "f_mkt_ret1",
+    "f_rel_ret20",
+    "f_fx_ret1",
+    "f_fx_ret20",
+    "f_us2y",
+    "f_us2y_change20",
+    "f_us10y",
+    "f_us10y_change20",
+    "f_credit",
+    "f_credit_change20",
+    "f_vix",
+    "f_vix_change20",
+    "f_term_spread",
+    "f_us_cpi_yoy",
+    "f_us_ip_yoy",
+    "f_us_unemployment",
+    "f_us_short_rate",
+    "f_fin_log_assets",
+    "f_fin_margin",
+    "f_fin_roa_annualized",
+    "f_fin_roe_annualized",
+    "f_fin_equity_ratio",
+    "f_fin_liabilities_ratio",
+    "f_fin_cashflow_assets_annualized",
+    "f_fin_revenue_growth",
+    "f_fin_log_market_cap_estimate",
+    "f_fin_earnings_yield",
+    "f_fin_book_to_market",
+    "f_fin_log_per",
+    "f_fin_log_pbr",
+    "f_fin_log_abs_eps",
+    "f_fin_eps_negative",
+    "f_fin_age_days",
+    "f_fin_log_assets_missing",
+    "f_fin_margin_missing",
+    "f_fin_roa_annualized_missing",
+    "f_fin_roe_annualized_missing",
+    "f_fin_equity_ratio_missing",
+    "f_fin_liabilities_ratio_missing",
+    "f_fin_cashflow_assets_annualized_missing",
+    "f_fin_revenue_growth_missing",
+    "f_fin_log_market_cap_estimate_missing",
+    "f_fin_earnings_yield_missing",
+    "f_fin_book_to_market_missing",
+    "f_fin_log_per_missing",
+    "f_fin_log_pbr_missing",
+    "f_fin_log_abs_eps_missing",
+    "f_fin_eps_negative_missing",
+    "f_fin_age_days_missing"
+  ],
+  "data_last_observation_date": "2026-10-22",
+  "forecast_cutoff_at_utc": "2026-10-22T20:00:00+00:00",
+  "model_version": "v4b.0.1",
+  "rows": 1446,
+  "input_source": "V3_publication_time_export_v1",
+  "estimation": "Bayesian collapsed quadrature over log(Q/R); inverse-gamma R; random-walk coefficients",
+  "horizon_likelihood": "fixed-phase non-overlapping cumulative outcomes",
+  "uncertainty": "posterior predictive Student-t mixture: state, observation, Q/R parameter uncertainty; conditional on model and fixed prior hyperparameters",
+  "csv_file": "2026-10-22_v4b_20261023T211748_4c93bf90.csv",
+  "csv_sha256": "6fa3d83b805616a9982e14df1b0350ac55879322f93b189ff969c7013aa0649e"
+}
