@@ -1,0 +1,6 @@
+forecasting release: 2026-10-24 r2
+JP / US / BOTH; V4-A and V4-B
+Complete repository package with V3 input bridge and results-only dashboard importer.
+Model versions remain v4a.0.1 / v4b.0.1.
+Setup: START_HERE_JP.md
+Validated locally; GitHub credentials and live market run need setup.

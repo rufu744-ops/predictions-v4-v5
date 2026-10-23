@@ -1,0 +1,45 @@
+name: Import forecasting V4 results
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 1-5'
+    - cron: '0 3 * * 2-6'
+permissions:
+  contents: write
+concurrency:
+  group: stock-forecast-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.V4_RESULTS_REPOSITORY }}
+          ref: ${{ vars.V4_RESULTS_BRANCH || 'main' }}
+          token: ${{ secrets.V4_RESULTS_READ_TOKEN }}
+          path: _v4_results
+          persist-credentials: false
+      - run: python integration/import_v4.py --source _v4_results --destination .
+      - run: python -m dashboard.normalize
+      - run: python -m dashboard.build
+      - name: Preserve imported history and update the view
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for dir in predictions/v4a predictions/v4b evaluations/v4a evaluations/v4b records; do
+            if [[ -d "$dir" ]]; then git add "$dir"; fi
+          done
+          git add dashboard/data.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "dashboard: import A/B results $GITHUB_RUN_ID"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
